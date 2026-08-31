@@ -1,0 +1,63 @@
+table Asset
+	lineageTag: 3f1c0a10-2000-4000-a000-000000000001
+
+	column id
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: id
+		lineageTag: 3f1c0a10-2001-4000-a000-000000000001
+
+	column assetTag
+		dataType: string
+		summarizeBy: none
+		sourceColumn: assetTag
+		lineageTag: 3f1c0a10-2001-4000-a000-000000000002
+
+	column name
+		dataType: string
+		summarizeBy: none
+		sourceColumn: name
+		lineageTag: 3f1c0a10-2001-4000-a000-000000000003
+
+	column type
+		dataType: string
+		summarizeBy: none
+		sourceColumn: type
+		lineageTag: 3f1c0a10-2001-4000-a000-000000000004
+
+	column site
+		dataType: string
+		summarizeBy: none
+		sourceColumn: site
+		lineageTag: 3f1c0a10-2001-4000-a000-000000000005
+
+	column model
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model
+		lineageTag: 3f1c0a10-2001-4000-a000-000000000006
+
+	column status
+		dataType: string
+		summarizeBy: none
+		sourceColumn: status
+		lineageTag: 3f1c0a10-2001-4000-a000-000000000007
+
+	column serviceIntervalHours
+		dataType: double
+		summarizeBy: none
+		sourceColumn: serviceIntervalHours
+		lineageTag: 3f1c0a10-2001-4000-a000-000000000008
+
+	partition Asset = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database(DbServer, DbName),
+				    data = Source{[Schema="public", Item="Asset"]}[Data],
+				    trimmed = Table.SelectColumns(data, {"id","assetTag","name","type","site","model","status","serviceIntervalHours"})
+				in
+				    trimmed
+
+	annotation SummarizationSetBy = Automatic

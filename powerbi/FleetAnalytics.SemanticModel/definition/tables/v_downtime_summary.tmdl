@@ -1,0 +1,62 @@
+table v_downtime_summary
+	lineageTag: 3f1c0a10-2000-4000-a000-000000000004
+
+	column assetId
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: assetId
+		lineageTag: 3f1c0a10-2004-4000-a000-000000000001
+
+	column assetTag
+		dataType: string
+		summarizeBy: none
+		sourceColumn: assetTag
+		lineageTag: 3f1c0a10-2004-4000-a000-000000000002
+
+	column unplanned_events_30d
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: unplanned_events_30d
+		lineageTag: 3f1c0a10-2004-4000-a000-000000000003
+
+	column unplanned_downtime_hours_30d
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: unplanned_downtime_hours_30d
+		lineageTag: 3f1c0a10-2004-4000-a000-000000000004
+
+	column total_downtime_hours_30d
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: total_downtime_hours_30d
+		lineageTag: 3f1c0a10-2004-4000-a000-000000000005
+
+	column mtbf_hours
+		dataType: double
+		summarizeBy: average
+		sourceColumn: mtbf_hours
+		lineageTag: 3f1c0a10-2004-4000-a000-000000000006
+
+	column mttr_hours
+		dataType: double
+		summarizeBy: average
+		sourceColumn: mttr_hours
+		lineageTag: 3f1c0a10-2004-4000-a000-000000000007
+
+	column availability_pct_30d
+		dataType: double
+		summarizeBy: average
+		sourceColumn: availability_pct_30d
+		lineageTag: 3f1c0a10-2004-4000-a000-000000000008
+
+	partition v_downtime_summary = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database(DbServer, DbName),
+				    data = Source{[Schema="public", Item="v_downtime_summary"]}[Data]
+				in
+				    data
+
+	annotation SummarizationSetBy = Automatic

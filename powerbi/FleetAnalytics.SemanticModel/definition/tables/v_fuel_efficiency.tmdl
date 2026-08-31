@@ -1,0 +1,56 @@
+table v_fuel_efficiency
+	lineageTag: 3f1c0a10-2000-4000-a000-000000000003
+
+	column assetId
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: assetId
+		lineageTag: 3f1c0a10-2003-4000-a000-000000000001
+
+	column assetTag
+		dataType: string
+		summarizeBy: none
+		sourceColumn: assetTag
+		lineageTag: 3f1c0a10-2003-4000-a000-000000000002
+
+	column litres_30d
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: litres_30d
+		lineageTag: 3f1c0a10-2003-4000-a000-000000000003
+
+	column fuel_cost_30d
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: fuel_cost_30d
+		lineageTag: 3f1c0a10-2003-4000-a000-000000000004
+
+	column engine_hours_30d
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: engine_hours_30d
+		lineageTag: 3f1c0a10-2003-4000-a000-000000000005
+
+	column litres_per_engine_hour
+		dataType: double
+		summarizeBy: average
+		sourceColumn: litres_per_engine_hour
+		lineageTag: 3f1c0a10-2003-4000-a000-000000000006
+
+	column cost_per_engine_hour
+		dataType: double
+		summarizeBy: average
+		sourceColumn: cost_per_engine_hour
+		lineageTag: 3f1c0a10-2003-4000-a000-000000000007
+
+	partition v_fuel_efficiency = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database(DbServer, DbName),
+				    data = Source{[Schema="public", Item="v_fuel_efficiency"]}[Data]
+				in
+				    data
+
+	annotation SummarizationSetBy = Automatic

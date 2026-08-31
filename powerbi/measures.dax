@@ -1,0 +1,76 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Fleet Asset Tracking — DAX measures
+//
+// Authoritative copy of every measure in FleetAnalytics.SemanticModel. If the
+// PBIP folder does not open cleanly in your Power BI Desktop build, create a
+// blank report connected to the SQL views (see DATA_SOURCE.md) and paste these
+// measures into a table named "Measures" (or onto v_fleet_kpis).
+//
+// Tables referenced are the SQL views from server/sql/views.sql plus the base
+// tables Asset and MaintenanceFlag.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Utilization ──────────────────────────────────────────────────────────────
+Avg Utilization % =
+    AVERAGE ( v_asset_utilization_rollup[avg_utilization_pct_30d] )
+
+Total Engine Hours (30d) =
+    SUM ( v_asset_utilization_rollup[total_engine_hours_30d] )
+
+Assets Below Utilization Floor =
+    CALCULATE (
+        COUNTROWS ( v_asset_utilization_rollup ),
+        v_asset_utilization_rollup[avg_utilization_pct_30d] < 45
+    )
+
+// ── Reliability / downtime ───────────────────────────────────────────────────
+Fleet Availability % =
+    AVERAGE ( v_downtime_summary[availability_pct_30d] )
+
+Unplanned Downtime Hrs =
+    SUM ( v_downtime_summary[unplanned_downtime_hours_30d] )
+
+MTBF (hrs) =
+    AVERAGE ( v_downtime_summary[mtbf_hours] )
+
+MTTR (hrs) =
+    AVERAGE ( v_downtime_summary[mttr_hours] )
+
+// ── Fuel ─────────────────────────────────────────────────────────────────────
+Fuel Cost per Engine Hr =
+    DIVIDE (
+        SUM ( v_fuel_efficiency[fuel_cost_30d] ),
+        SUM ( v_fuel_efficiency[engine_hours_30d] )
+    )
+
+Litres per Engine Hr =
+    DIVIDE (
+        SUM ( v_fuel_efficiency[litres_30d] ),
+        SUM ( v_fuel_efficiency[engine_hours_30d] )
+    )
+
+// ── Maintenance ──────────────────────────────────────────────────────────────
+Assets Overdue for Service =
+    CALCULATE (
+        COUNTROWS ( v_maintenance_status ),
+        v_maintenance_status[service_overdue] = TRUE ()
+    )
+
+Min Hours To Next Service =
+    MIN ( v_maintenance_status[hours_to_next_service] )
+
+// ── Flags & IT ticketing integration ─────────────────────────────────────────
+Open Maintenance Flags =
+    CALCULATE ( COUNTROWS ( MaintenanceFlag ), MaintenanceFlag[status] = "OPEN" )
+
+Ticketed Flags =
+    CALCULATE ( COUNTROWS ( MaintenanceFlag ), MaintenanceFlag[status] = "TICKETED" )
+
+Tickets Auto-Raised =
+    CALCULATE (
+        COUNTROWS ( MaintenanceFlag ),
+        NOT ( ISBLANK ( MaintenanceFlag[externalTicketNumber] ) )
+    )
+
+Flag Escalation Rate % =
+    DIVIDE ( [Ticketed Flags], [Open Maintenance Flags] + [Ticketed Flags] )

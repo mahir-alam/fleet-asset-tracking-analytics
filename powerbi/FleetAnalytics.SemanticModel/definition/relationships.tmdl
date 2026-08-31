@@ -1,0 +1,23 @@
+relationship Asset_util
+	fromColumn: v_asset_utilization_rollup.assetTag
+	toColumn: Asset.assetTag
+
+relationship Asset_fuel
+	fromColumn: v_fuel_efficiency.assetTag
+	toColumn: Asset.assetTag
+
+relationship Asset_downtime
+	fromColumn: v_downtime_summary.assetTag
+	toColumn: Asset.assetTag
+
+relationship Asset_maintenance
+	fromColumn: v_maintenance_status.assetTag
+	toColumn: Asset.assetTag
+
+relationship Asset_flags
+	fromColumn: MaintenanceFlag.assetId
+	toColumn: Asset.id
+
+relationship Date_flags
+	fromColumn: MaintenanceFlag.FlagDate
+	toColumn: DateTable.Date

@@ -1,0 +1,33 @@
+table DateTable
+	lineageTag: 3f1c0a10-2000-4000-a000-000000000008
+	dataCategory: Time
+
+	column Date
+		dataType: dateTime
+		isKey
+		formatString: Short Date
+		summarizeBy: none
+		lineageTag: 3f1c0a10-2008-4000-a000-000000000001
+
+	column Year = YEAR ( DateTable[Date] )
+		dataType: int64
+		summarizeBy: none
+		lineageTag: 3f1c0a10-2008-4000-a000-000000000002
+
+	column MonthName = FORMAT ( DateTable[Date], "mmm yyyy" )
+		dataType: string
+		summarizeBy: none
+		sortByColumn: MonthKey
+		lineageTag: 3f1c0a10-2008-4000-a000-000000000003
+
+	column MonthKey = ( YEAR ( DateTable[Date] ) * 100 ) + MONTH ( DateTable[Date] )
+		dataType: int64
+		isHidden
+		summarizeBy: none
+		lineageTag: 3f1c0a10-2008-4000-a000-000000000004
+
+	partition DateTable = calculated
+		mode: import
+		source = CALENDAR ( DATE ( YEAR ( TODAY () ) - 1, 1, 1 ), TODAY () )
+
+	annotation SummarizationSetBy = Automatic

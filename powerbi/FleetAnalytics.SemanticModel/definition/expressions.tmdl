@@ -1,0 +1,7 @@
+/// PostgreSQL host:port for the Fleet database. Local dev: localhost:5433
+expression DbServer = "localhost:5433" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 3f1c0a10-1000-4000-a000-000000000001
+
+/// Fleet database name.
+expression DbName = "fleet" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 3f1c0a10-1000-4000-a000-000000000002

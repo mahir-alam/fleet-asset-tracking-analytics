@@ -1,0 +1,77 @@
+table MaintenanceFlag
+	lineageTag: 3f1c0a10-2000-4000-a000-000000000007
+
+	column id
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: id
+		lineageTag: 3f1c0a10-2007-4000-a000-000000000001
+
+	column assetId
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: assetId
+		lineageTag: 3f1c0a10-2007-4000-a000-000000000002
+
+	column kind
+		dataType: string
+		summarizeBy: none
+		sourceColumn: kind
+		lineageTag: 3f1c0a10-2007-4000-a000-000000000003
+
+	column status
+		dataType: string
+		summarizeBy: none
+		sourceColumn: status
+		lineageTag: 3f1c0a10-2007-4000-a000-000000000004
+
+	column detail
+		dataType: string
+		summarizeBy: none
+		sourceColumn: detail
+		lineageTag: 3f1c0a10-2007-4000-a000-000000000005
+
+	column thresholdValue
+		dataType: double
+		summarizeBy: none
+		sourceColumn: thresholdValue
+		lineageTag: 3f1c0a10-2007-4000-a000-000000000006
+
+	column observedValue
+		dataType: double
+		summarizeBy: none
+		sourceColumn: observedValue
+		lineageTag: 3f1c0a10-2007-4000-a000-000000000007
+
+	column externalTicketNumber
+		dataType: string
+		summarizeBy: none
+		sourceColumn: externalTicketNumber
+		lineageTag: 3f1c0a10-2007-4000-a000-000000000008
+
+	column createdAt
+		dataType: dateTime
+		formatString: General Date
+		summarizeBy: none
+		sourceColumn: createdAt
+		lineageTag: 3f1c0a10-2007-4000-a000-000000000009
+
+	column FlagDate = DATEVALUE ( FORMAT ( MaintenanceFlag[createdAt], "yyyy-mm-dd" ) )
+		dataType: dateTime
+		formatString: Short Date
+		summarizeBy: none
+		lineageTag: 3f1c0a10-2007-4000-a000-00000000000a
+
+	partition MaintenanceFlag = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database(DbServer, DbName),
+				    data = Source{[Schema="public", Item="MaintenanceFlag"]}[Data],
+				    trimmed = Table.SelectColumns(data, {"id","assetId","kind","status","detail","thresholdValue","observedValue","externalTicketNumber","createdAt"})
+				in
+				    trimmed
+
+	annotation SummarizationSetBy = Automatic

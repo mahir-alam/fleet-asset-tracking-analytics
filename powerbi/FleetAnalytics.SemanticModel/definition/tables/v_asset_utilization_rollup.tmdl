@@ -1,0 +1,50 @@
+table v_asset_utilization_rollup
+	lineageTag: 3f1c0a10-2000-4000-a000-000000000002
+
+	column assetId
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: assetId
+		lineageTag: 3f1c0a10-2002-4000-a000-000000000001
+
+	column assetTag
+		dataType: string
+		summarizeBy: none
+		sourceColumn: assetTag
+		lineageTag: 3f1c0a10-2002-4000-a000-000000000002
+
+	column days_logged
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: days_logged
+		lineageTag: 3f1c0a10-2002-4000-a000-000000000003
+
+	column total_engine_hours_30d
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: total_engine_hours_30d
+		lineageTag: 3f1c0a10-2002-4000-a000-000000000004
+
+	column avg_engine_hours_per_day
+		dataType: double
+		summarizeBy: average
+		sourceColumn: avg_engine_hours_per_day
+		lineageTag: 3f1c0a10-2002-4000-a000-000000000005
+
+	column avg_utilization_pct_30d
+		dataType: double
+		summarizeBy: average
+		sourceColumn: avg_utilization_pct_30d
+		lineageTag: 3f1c0a10-2002-4000-a000-000000000006
+
+	partition v_asset_utilization_rollup = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database(DbServer, DbName),
+				    data = Source{[Schema="public", Item="v_asset_utilization_rollup"]}[Data]
+				in
+				    data
+
+	annotation SummarizationSetBy = Automatic

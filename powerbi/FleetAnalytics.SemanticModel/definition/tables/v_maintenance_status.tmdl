@@ -1,0 +1,62 @@
+table v_maintenance_status
+	lineageTag: 3f1c0a10-2000-4000-a000-000000000005
+
+	column assetId
+		dataType: string
+		isHidden
+		summarizeBy: none
+		sourceColumn: assetId
+		lineageTag: 3f1c0a10-2005-4000-a000-000000000001
+
+	column assetTag
+		dataType: string
+		summarizeBy: none
+		sourceColumn: assetTag
+		lineageTag: 3f1c0a10-2005-4000-a000-000000000002
+
+	column serviceIntervalHours
+		dataType: double
+		summarizeBy: none
+		sourceColumn: serviceIntervalHours
+		lineageTag: 3f1c0a10-2005-4000-a000-000000000003
+
+	column lastServiceHours
+		dataType: double
+		summarizeBy: none
+		sourceColumn: lastServiceHours
+		lineageTag: 3f1c0a10-2005-4000-a000-000000000004
+
+	column currentEngineHours
+		dataType: double
+		summarizeBy: none
+		sourceColumn: currentEngineHours
+		lineageTag: 3f1c0a10-2005-4000-a000-000000000005
+
+	column hours_since_service
+		dataType: double
+		summarizeBy: none
+		sourceColumn: hours_since_service
+		lineageTag: 3f1c0a10-2005-4000-a000-000000000006
+
+	column hours_to_next_service
+		dataType: double
+		summarizeBy: none
+		sourceColumn: hours_to_next_service
+		lineageTag: 3f1c0a10-2005-4000-a000-000000000007
+
+	column service_overdue
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: service_overdue
+		lineageTag: 3f1c0a10-2005-4000-a000-000000000008
+
+	partition v_maintenance_status = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database(DbServer, DbName),
+				    data = Source{[Schema="public", Item="v_maintenance_status"]}[Data]
+				in
+				    data
+
+	annotation SummarizationSetBy = Automatic

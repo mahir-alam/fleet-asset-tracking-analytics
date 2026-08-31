@@ -1,0 +1,128 @@
+table v_fleet_kpis
+	lineageTag: 3f1c0a10-2000-4000-a000-000000000006
+
+	/// One-row fleet rollup. Also the home for the model's measures.
+	column active_assets
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: active_assets
+		lineageTag: 3f1c0a10-2006-4000-a000-000000000001
+
+	column avg_utilization_pct
+		dataType: double
+		summarizeBy: average
+		sourceColumn: avg_utilization_pct
+		lineageTag: 3f1c0a10-2006-4000-a000-000000000002
+
+	column avg_availability_pct
+		dataType: double
+		summarizeBy: average
+		sourceColumn: avg_availability_pct
+		lineageTag: 3f1c0a10-2006-4000-a000-000000000003
+
+	column avg_fuel_cost_per_engine_hour
+		dataType: double
+		summarizeBy: average
+		sourceColumn: avg_fuel_cost_per_engine_hour
+		lineageTag: 3f1c0a10-2006-4000-a000-000000000004
+
+	column total_unplanned_downtime_hours
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: total_unplanned_downtime_hours
+		lineageTag: 3f1c0a10-2006-4000-a000-000000000005
+
+	column assets_overdue_service
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: assets_overdue_service
+		lineageTag: 3f1c0a10-2006-4000-a000-000000000006
+
+	column open_flags
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: open_flags
+		lineageTag: 3f1c0a10-2006-4000-a000-000000000007
+
+	column ticketed_flags
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: ticketed_flags
+		lineageTag: 3f1c0a10-2006-4000-a000-000000000008
+
+	column tickets_auto_raised
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: tickets_auto_raised
+		lineageTag: 3f1c0a10-2006-4000-a000-000000000009
+
+	measure 'Avg Utilization %' = AVERAGE ( v_asset_utilization_rollup[avg_utilization_pct_30d] )
+		formatString: 0.0
+		lineageTag: 3f1c0a10-2006-4000-a000-0000000000a1
+
+	measure 'Total Engine Hours (30d)' = SUM ( v_asset_utilization_rollup[total_engine_hours_30d] )
+		formatString: #,0
+		lineageTag: 3f1c0a10-2006-4000-a000-0000000000a2
+
+	measure 'Assets Below Utilization Floor' = CALCULATE ( COUNTROWS ( v_asset_utilization_rollup ), v_asset_utilization_rollup[avg_utilization_pct_30d] < 45 )
+		formatString: 0
+		lineageTag: 3f1c0a10-2006-4000-a000-0000000000a3
+
+	measure 'Fleet Availability %' = AVERAGE ( v_downtime_summary[availability_pct_30d] )
+		formatString: 0.0
+		lineageTag: 3f1c0a10-2006-4000-a000-0000000000a4
+
+	measure 'Unplanned Downtime Hrs' = SUM ( v_downtime_summary[unplanned_downtime_hours_30d] )
+		formatString: #,0.0
+		lineageTag: 3f1c0a10-2006-4000-a000-0000000000a5
+
+	measure 'MTBF (hrs)' = AVERAGE ( v_downtime_summary[mtbf_hours] )
+		formatString: #,0.0
+		lineageTag: 3f1c0a10-2006-4000-a000-0000000000a6
+
+	measure 'MTTR (hrs)' = AVERAGE ( v_downtime_summary[mttr_hours] )
+		formatString: 0.0
+		lineageTag: 3f1c0a10-2006-4000-a000-0000000000a7
+
+	measure 'Fuel Cost per Engine Hr' = DIVIDE ( SUM ( v_fuel_efficiency[fuel_cost_30d] ), SUM ( v_fuel_efficiency[engine_hours_30d] ) )
+		formatString: \$#,0.00
+		lineageTag: 3f1c0a10-2006-4000-a000-0000000000a8
+
+	measure 'Litres per Engine Hr' = DIVIDE ( SUM ( v_fuel_efficiency[litres_30d] ), SUM ( v_fuel_efficiency[engine_hours_30d] ) )
+		formatString: 0.00
+		lineageTag: 3f1c0a10-2006-4000-a000-0000000000a9
+
+	measure 'Assets Overdue for Service' = CALCULATE ( COUNTROWS ( v_maintenance_status ), v_maintenance_status[service_overdue] = TRUE () )
+		formatString: 0
+		lineageTag: 3f1c0a10-2006-4000-a000-0000000000aa
+
+	measure 'Min Hours To Next Service' = MIN ( v_maintenance_status[hours_to_next_service] )
+		formatString: #,0.0
+		lineageTag: 3f1c0a10-2006-4000-a000-0000000000ab
+
+	measure 'Open Maintenance Flags' = CALCULATE ( COUNTROWS ( MaintenanceFlag ), MaintenanceFlag[status] = "OPEN" )
+		formatString: 0
+		lineageTag: 3f1c0a10-2006-4000-a000-0000000000ac
+
+	measure 'Ticketed Flags' = CALCULATE ( COUNTROWS ( MaintenanceFlag ), MaintenanceFlag[status] = "TICKETED" )
+		formatString: 0
+		lineageTag: 3f1c0a10-2006-4000-a000-0000000000ad
+
+	measure 'Tickets Auto-Raised' = CALCULATE ( COUNTROWS ( MaintenanceFlag ), NOT ( ISBLANK ( MaintenanceFlag[externalTicketNumber] ) ) )
+		formatString: 0
+		lineageTag: 3f1c0a10-2006-4000-a000-0000000000ae
+
+	measure 'Flag Escalation Rate %' = DIVIDE ( [Ticketed Flags], [Open Maintenance Flags] + [Ticketed Flags] )
+		formatString: 0.0%
+		lineageTag: 3f1c0a10-2006-4000-a000-0000000000af
+
+	partition v_fleet_kpis = m
+		mode: import
+		source =
+				let
+				    Source = PostgreSQL.Database(DbServer, DbName),
+				    data = Source{[Schema="public", Item="v_fleet_kpis"]}[Data]
+				in
+				    data
+
+	annotation SummarizationSetBy = Automatic
