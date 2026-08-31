@@ -47,7 +47,7 @@ each. Use the dark theme, accent `#3D9DF2`.
 | Path                                             | What it is                                    |
 | ------------------------------------------------ | -------------------------------------------- |
 | `fleet-analytics.pbip`                            | project entry point                          |
-| `FleetAnalytics.SemanticModel/definition/*.tmdl`  | model: 8 tables, 6 relationships, 16 measures |
+| `FleetAnalytics.SemanticModel/definition/*.tmdl`  | model: 8 tables, 6 relationships, 15 measures |
 | `FleetAnalytics.Report/definition/`               | 3 empty report pages                          |
 | `measures.dax`                                    | every measure, copy-paste ready              |
 | `DATA_SOURCE.md`                                  | connection + relationships                    |
