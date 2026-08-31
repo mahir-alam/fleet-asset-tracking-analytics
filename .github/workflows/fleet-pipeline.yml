@@ -1,0 +1,47 @@
+name: fleet-pipeline
+
+# Cloud-side equivalent of automation/Invoke-FleetPipeline.ps1 — Render has no
+# Windows Task Scheduler, so the scheduled ingest + report + evaluation runs
+# here instead. Requires two repo secrets:
+#   DATABASE_URL      Postgres connection string for the deployed DB
+#   FLEET_API_BASE    base URL of the deployed API (e.g. https://fleet-api.onrender.com)
+
+on:
+  schedule:
+    - cron: "0 5 * * *" # 05:00 UTC daily
+  workflow_dispatch:
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      FLEET_API_BASE: ${{ secrets.FLEET_API_BASE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install analytics package
+        run: pip install -e ./analytics
+
+      - name: Ingest raw workbook
+        run: python -m fleet_analytics ingest --file data/raw/fleet_raw_sample.xlsx
+
+      - name: Rebuild Excel summary
+        run: python -m fleet_analytics report --out data/exports
+
+      - name: Trigger fleet evaluation
+        run: |
+          curl -sS -X POST "$FLEET_API_BASE/api/alerts/evaluate" \
+            -H 'content-type: application/json' -d '{}' | tee /tmp/summary.json
+          python -c "import json,sys; s=json.load(open('/tmp/summary.json')); print(s); sys.exit(1 if s.get('ticketFailures',0) else 0)"
+
+      - name: Upload summary workbook
+        uses: actions/upload-artifact@v4
+        with:
+          name: fleet-summary
+          path: data/exports/*.xlsx
+          if-no-files-found: warn
