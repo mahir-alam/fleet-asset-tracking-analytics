@@ -1,0 +1,157 @@
+// Fleet Asset Tracking & Predictive Analytics — data model
+// PostgreSQL + Prisma. Analytics views live in server/sql/views.sql
+// (applied by `npm run db:views`) and are read via $queryRaw.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AssetType {
+  HAUL_TRUCK
+  EXCAVATOR
+  DOZER
+  LOADER
+  GRADER
+  WATER_TRUCK
+}
+
+enum AssetStatus {
+  ACTIVE
+  DOWN
+  MAINTENANCE
+  RETIRED
+}
+
+enum DowntimeCategory {
+  UNPLANNED
+  PLANNED
+  STANDBY
+}
+
+enum FlagKind {
+  SERVICE_DUE
+  SERVICE_OVERDUE
+  LOW_UTILIZATION
+  HIGH_FUEL_BURN
+  EXCESSIVE_DOWNTIME
+}
+
+enum FlagStatus {
+  OPEN
+  TICKETED
+  RESOLVED
+}
+
+model Asset {
+  id                   String      @id @default(cuid())
+  assetTag             String      @unique
+  name                 String
+  type                 AssetType
+  site                 String
+  model                String
+  commissionedAt       DateTime
+  scheduledHoursPerDay Float       @default(20)
+  serviceIntervalHours Float       @default(500)
+  lastServiceHours     Float       @default(0)
+  currentEngineHours   Float       @default(0)
+  status               AssetStatus @default(ACTIVE)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  utilizationLogs  UtilizationLog[]
+  fuelLogs         FuelLog[]
+  downtimeEvents   DowntimeEvent[]
+  maintenanceFlags MaintenanceFlag[]
+
+  @@index([type])
+  @@index([status])
+}
+
+model UtilizationLog {
+  id            String   @id @default(cuid())
+  assetId       String
+  asset         Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  date          DateTime @db.Date
+  engineHours   Float
+  idleHours     Float    @default(0)
+  distanceKm    Float    @default(0)
+  payloadTonnes Float?
+  createdAt     DateTime @default(now())
+
+  @@unique([assetId, date])
+  @@index([date])
+}
+
+model FuelLog {
+  id                String   @id @default(cuid())
+  assetId           String
+  asset             Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  date              DateTime @db.Date
+  litres            Float
+  cost              Float
+  engineHoursAtFill Float
+  createdAt         DateTime @default(now())
+
+  @@unique([assetId, date])
+  @@index([date])
+}
+
+model DowntimeEvent {
+  id        String           @id @default(cuid())
+  assetId   String
+  asset     Asset            @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  startAt   DateTime
+  endAt     DateTime?
+  category  DowntimeCategory
+  reason    String
+  hours     Float            @default(0)
+  createdAt DateTime         @default(now())
+
+  @@index([assetId, startAt])
+  @@index([category])
+}
+
+model MaintenanceFlag {
+  id                   String     @id @default(cuid())
+  assetId              String
+  asset                Asset      @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  kind                 FlagKind
+  detail               String
+  thresholdValue       Float
+  observedValue        Float
+  status               FlagStatus @default(OPEN)
+  externalTicketNumber String?
+  externalTicketId     String?
+  createdAt            DateTime   @default(now())
+  resolvedAt           DateTime?
+
+  integrationEvents IntegrationEvent[]
+
+  // Application-level dedupe also backed by a partial unique index created in
+  // sql/views.sql: one non-RESOLVED flag per (assetId, kind).
+  @@index([assetId, kind, status])
+  @@index([status])
+}
+
+model IntegrationEvent {
+  id                String           @id @default(cuid())
+  maintenanceFlagId String?
+  maintenanceFlag   MaintenanceFlag? @relation(fields: [maintenanceFlagId], references: [id], onDelete: SetNull)
+  direction         String           @default("outbound")
+  endpoint          String
+  requestPayload    Json
+  responseStatus    Int?
+  responseBody      Json?
+  ticketNumber      String?
+  ok                Boolean          @default(false)
+  errorMessage      String?
+  createdAt         DateTime         @default(now())
+
+  @@index([createdAt])
+  @@index([ok])
+}

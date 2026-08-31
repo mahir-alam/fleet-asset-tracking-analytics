@@ -1,0 +1,16 @@
+{
+  "lowUtilizationPct": 45,
+  "minDaysLoggedForUtilization": 7,
+  "excessiveUnplannedDowntimeHours": 60,
+  "minAvailabilityPct": 80,
+  "serviceDueWindowHours": 50,
+  "fuelBurnMultiplier": 1.25,
+  "fuelBurnBaselineLitresPerHour": {
+    "HAUL_TRUCK": 45,
+    "EXCAVATOR": 30,
+    "DOZER": 35,
+    "LOADER": 25,
+    "GRADER": 20,
+    "WATER_TRUCK": 22
+  }
+}

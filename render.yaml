@@ -1,0 +1,39 @@
+# Render blueprint — backend API + managed Postgres.
+# The React client deploys separately to Vercel (client/vercel.json).
+
+databases:
+  - name: fleet-db
+    databaseName: fleet
+    user: fleet
+    plan: free
+
+services:
+  - type: web
+    name: fleet-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install && npx prisma generate && npx prisma migrate deploy && node -e "require('child_process').execSync('npx prisma db execute --file sql/views.sql --schema prisma/schema.prisma',{stdio:'inherit'})"
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fleet-db
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_ORIGIN
+        sync: false # set to the Vercel URL
+      - key: DASHBOARD_BASE_URL
+        sync: false # set to the Vercel URL
+      - key: INTEGRATION_MODE
+        value: live
+      - key: TICKET_TRACKER_BASE_URL
+        sync: false
+      - key: INTEGRATION_API_KEY
+        sync: false
+      - key: INTEGRATION_EXTERNAL_SOURCE
+        value: fleet-asset-tracker
+      - key: EVALUATION_CRON
+        value: "*/30 * * * *"
