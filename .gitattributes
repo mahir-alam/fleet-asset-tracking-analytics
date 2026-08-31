@@ -1,0 +1,12 @@
+# Normalise line endings — LF in the repo, checkout as-is per platform.
+* text=auto eol=lf
+
+*.ps1 text eol=crlf
+
+# Binary assets
+*.xlsx binary
+*.xlsb binary
+*.pbix binary
+*.png binary
+*.jpg binary
+*.ico binary

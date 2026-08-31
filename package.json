@@ -1,0 +1,29 @@
+{
+  "name": "fleet-asset-tracking-analytics",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Full-stack fleet utilization analytics platform with real-time web dashboard, Power BI reporting, and automated IT ticketing integration",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "npm --workspace server run dev",
+    "dev:client": "npm --workspace client run dev",
+    "build": "npm --workspace client run build",
+    "db:up": "docker compose up -d db",
+    "db:migrate": "npm --workspace server run prisma:migrate",
+    "db:views": "npm --workspace server run db:views",
+    "seed": "npm --workspace server run seed",
+    "setup": "npm install && npm run db:up && npm run db:migrate && npm run db:views && python data/generate_sample_data.py && npm run seed",
+    "test": "npm --workspace server test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

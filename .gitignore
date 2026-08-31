@@ -141,3 +141,30 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# ─── Project-specific ───────────────────────────────────────────────────────
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# Generated data / reports (keep the folders, ignore the contents)
+data/exports/*
+!data/exports/.gitkeep
+
+# PowerShell automation run logs
+automation/logs/*
+!automation/logs/.gitkeep
+
+# Power BI local caches
+powerbi/**/.pbi/
+powerbi/**/.SemanticModel/.pbi/
+powerbi/**/cache.abf
+*.pbix
+
+# Prisma
+server/prisma/*.db
+
