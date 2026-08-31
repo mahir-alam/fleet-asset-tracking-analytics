@@ -1,0 +1,6 @@
+# Pure-Python stack — no compiler / wheels-for-your-Python-version headaches.
+openpyxl>=3.1
+SQLAlchemy>=2.0
+pg8000>=1.30
+python-dotenv>=1.0
+pytest>=8.0

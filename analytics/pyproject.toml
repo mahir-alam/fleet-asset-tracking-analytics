@@ -1,0 +1,27 @@
+[project]
+name = "fleet-analytics"
+version = "1.0.0"
+description = "Data-analysis and Excel pipeline for Fleet Asset Tracking & Predictive Analytics"
+requires-python = ">=3.10"
+dependencies = [
+    "openpyxl>=3.1",
+    "SQLAlchemy>=2.0",
+    "pg8000>=1.30",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+fleet-analytics = "fleet_analytics.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["fleet_analytics"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
