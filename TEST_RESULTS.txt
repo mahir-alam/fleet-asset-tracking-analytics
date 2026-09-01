@@ -1,0 +1,79 @@
+================================================================================
+Fleet Asset Tracking & Analytics - Full Test Suite
+Generated: 2026-09-01T19:33:09Z
+Host: MINGW64_NT-10.0-26200 / node v24.13.0 / Python 3.14.2
+Total: 31 tests  (20 server node:test + 11 analytics pytest)
+================================================================================
+
+########## 1/2  server  ->  npm --workspace server test  ##########
+
+
+> @fleet/server@1.0.0 test
+> node --test --test-reporter spec "tests/**/*.test.js"
+
+2026-09-01T19:33:10.848Z INFO  Fleet evaluation: 3 assets, 2 new flags, 1 tickets (0 failed)
+2026-09-01T19:33:10.851Z INFO  Fleet evaluation: 3 assets, 2 new flags, 1 tickets (0 failed)
+2026-09-01T19:33:10.851Z INFO  Fleet evaluation: 3 assets, 0 new flags, 0 tickets (0 failed)
+2026-09-01T19:33:10.852Z INFO  Fleet evaluation: 3 assets, 2 new flags, 0 tickets (0 failed)
+✔ raises flags, tickets only the ticketable kinds, records an event per call (14.2215ms)
+✔ is idempotent — a second run creates nothing new (dedupe) (0.9875ms)
+✔ createTickets:false raises flags but makes no calls (0.3044ms)
+[0mGET /health [32m200[0m 1.524 ms - 47[0m
+✔ GET /health reports the service and integration mode (32.0714ms)
+[0mGET /api/nope [33m404[0m 0.296 ms - 27[0m
+✔ unknown routes return a JSON 404 (13.3008ms)
+[0mGET /api/integration/config [32m200[0m 0.361 ms - 89[0m
+✔ GET /api/integration/config exposes the integration wiring (12.2776ms)
+[0mGET /api/alerts/flags?status=BOGUS [33m400[0m 1.089 ms - 151[0m
+✔ validation rejects a bad query param with 400 + details (6.4469ms)
+✔ healthy asset raises no findings (1.941ms)
+✔ SERVICE_OVERDUE when hours since service exceeds the interval (0.1692ms)
+✔ SERVICE_DUE inside the warning window, but not when also overdue (0.1469ms)
+✔ LOW_UTILIZATION only with enough logged days (0.1909ms)
+✔ EXCESSIVE_DOWNTIME on hours OR on availability (0.1313ms)
+✔ HIGH_FUEL_BURN compares against the per-type baseline (0.144ms)
+✔ string-typed metric values (from raw SQL) are coerced (0.1116ms)
+✔ ticketable kinds are the escalating ones (0.1662ms)
+✔ payload satisfies the tracker contract and carries no extra keys (1.5764ms)
+✔ impact/urgency vary by flag kind but stay in-enum (0.5315ms)
+✔ mock mode returns a synthetic INC- number without touching the network (0.3964ms)
+✔ live mode sends X-Api-Key and parses the ticket number from a 201 (0.4178ms)
+✔ live mode retries once on a 5xx then surfaces the failure (0.2824ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 511.06
+[server exit: 0]
+
+########## 2/2  analytics  ->  python -m pytest  ##########
+
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\mahir\AppData\Local\Programs\Python\Python314\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\mahir\OneDrive\Desktop\fleet-asset-tracking-analytics\analytics
+configfile: pyproject.toml
+testpaths: tests
+collecting ... collected 11 items
+
+tests/test_ingest.py::test_valid_workbook_passes PASSED                  [  9%]
+tests/test_ingest.py::test_rejects_unknown_asset_tag_in_logs PASSED      [ 18%]
+tests/test_ingest.py::test_rejects_bad_enum_and_out_of_range PASSED      [ 27%]
+tests/test_ingest.py::test_rejects_duplicate_asset_tags PASSED           [ 36%]
+tests/test_ingest.py::test_rejects_nonpositive_litres PASSED             [ 45%]
+tests/test_metrics.py::test_utilization_percentage_and_day_count PASSED  [ 54%]
+tests/test_metrics.py::test_utilization_excludes_rows_outside_the_window PASSED [ 63%]
+tests/test_metrics.py::test_fuel_per_engine_hour PASSED                  [ 72%]
+tests/test_metrics.py::test_downtime_mtbf_mttr_and_availability PASSED   [ 81%]
+tests/test_metrics.py::test_maintenance_overdue_flag PASSED              [ 90%]
+tests/test_metrics.py::test_compute_all_shape_and_kpis PASSED            [100%]
+
+============================= 11 passed in 0.40s ==============================
+[pytest exit: 0]
+
+================================================================================
+SUMMARY: 20 + 11 = 31 passed, 0 failed
+================================================================================
