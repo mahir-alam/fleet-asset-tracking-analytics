@@ -32,7 +32,7 @@ python -m fleet_analytics report              # -> data/exports/fleet-summary-<d
 pwsh automation/Invoke-FleetPipeline.ps1 -ApiBase http://localhost:4000
 
 # 6. tests
-npm --workspace server test                   # node:test — 20 tests, no DB/network
+npm --workspace server test                   # node:test — 22 tests, no DB/network
 cd analytics && python -m pytest -q            # 11 tests
 ```
 
@@ -69,7 +69,7 @@ cd analytics && python -m pytest -q            # 11 tests
 
 ## Code-review checklist
 
-- [ ] `npm --workspace server test` green (20)
+- [ ] `npm --workspace server test` green (22)
 - [ ] `pytest` green (11)
 - [ ] `npm --workspace client run build` clean
 - [ ] fresh evaluate → 5 flags / 3 tickets; second evaluate → 0

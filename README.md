@@ -71,7 +71,7 @@ repeatable.
 ## Tests
 
 ```bash
-npm --workspace server test        # 20 tests, no database or network
+npm --workspace server test        # 22 tests, no database or network
 cd analytics && python -m pytest -q # 11 tests
 ```
 
