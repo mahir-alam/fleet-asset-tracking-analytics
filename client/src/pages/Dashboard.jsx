@@ -20,6 +20,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState(null);
+  const [error, setError] = useState(null);
+  const [testAssetId, setTestAssetId] = useState('');
 
   const load = useCallback(async () => {
     const [k, a, c, f] = await Promise.all([
@@ -37,12 +39,13 @@ export default function Dashboard() {
       (grouped[flag.assetId] ??= []).push(flag);
     }
     setFlagsByAsset(grouped);
+    setError(null);
     setLoading(false);
   }, []);
 
   useEffect(() => {
     load().catch((e) => {
-      setToast({ bad: true, msg: `Load failed: ${e.message}` });
+      setError(e.message);
       setLoading(false);
     });
   }, [load]);
@@ -72,11 +75,14 @@ export default function Dashboard() {
   async function sendTestAlert() {
     setBusy(true);
     try {
-      const r = await api.testAlert({ kind: 'EXCESSIVE_DOWNTIME' });
+      const r = await api.testAlert({
+        kind: 'EXCESSIVE_DOWNTIME',
+        ...(testAssetId ? { assetId: testAssetId } : {}),
+      });
       flash({
         bad: !r.ok,
         msg: r.ok
-          ? `Test alert sent for ${r.asset.assetTag}. Ticket ${r.ticketNumber} created in the IT ticketing system.`
+          ? `Simulated alert for ${r.asset.assetTag}: mock ticket ${r.ticketNumber} — no real ticket was created. See the integration event log.`
           : `Test alert failed: ${r.error}`,
       });
       await load();
@@ -88,6 +94,7 @@ export default function Dashboard() {
   }
 
   if (loading) return <div className="loading">Loading fleet…</div>;
+  if (error) return <div className="loading">Couldn’t load the fleet dashboard: {error}</div>;
 
   return (
     <>
@@ -106,11 +113,26 @@ export default function Dashboard() {
         <button className="btn primary" onClick={runEvaluation} disabled={busy}>
           {busy ? 'Working…' : 'Refresh evaluation'}
         </button>
+        <select
+          className="btn"
+          value={testAssetId}
+          onChange={(e) => setTestAssetId(e.target.value)}
+          disabled={busy}
+          aria-label="Asset for test alert"
+        >
+          <option value="">First asset ({assets[0]?.assetTag ?? '—'})</option>
+          {assets.map((a) => (
+            <option key={a.assetId} value={a.assetId}>
+              {a.assetTag}
+            </option>
+          ))}
+        </select>
         <button className="btn" onClick={sendTestAlert} disabled={busy}>
           Send test alert
         </button>
         <span className="sub" style={{ color: 'var(--muted)' }}>
-          Evaluation scans every asset and auto-creates IT tickets for ticketable breaches.
+          Evaluation scans every asset and auto-creates IT tickets for ticketable breaches. A test
+          alert is always a simulation — it never posts to a real ticketing system.
         </span>
       </div>
 

@@ -6,7 +6,7 @@ import react from '@vitejs/plugin-react';
 // same-origin relative URLs. In production, set VITE_API_BASE_URL.
 export default defineConfig({
   plugins: [react()],
-  // Read VITE_* vars from the repo-root .env (single source of truth).
+  // Read VITE_* vars from the repo-root .env, not client/.env.
   envDir: fileURLToPath(new URL('..', import.meta.url)),
   build: {
     chunkSizeWarningLimit: 900,

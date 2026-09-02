@@ -21,6 +21,7 @@ const grid = '#2b3a4a';
 export default function Analytics() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     api
@@ -29,7 +30,10 @@ export default function Analytics() {
         setRows(r);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((e) => {
+        setError(e.message);
+        setLoading(false);
+      });
   }, []);
 
   const utilData = useMemo(
@@ -67,6 +71,7 @@ export default function Analytics() {
   );
 
   if (loading) return <div className="loading">Loading analytics…</div>;
+  if (error) return <div className="loading">Couldn’t load analytics: {error}</div>;
 
   return (
     <>

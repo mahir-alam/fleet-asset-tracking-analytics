@@ -66,7 +66,8 @@ header.topbar nav a.active { background: var(--panel-2); color: var(--text); }
 
 .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
 
-button.btn {
+button.btn,
+select.btn {
   background: var(--panel-2);
   color: var(--text);
   border: 1px solid var(--border);
@@ -75,9 +76,11 @@ button.btn {
   cursor: pointer;
   font-size: 13px;
 }
-button.btn:hover { border-color: var(--accent); }
+button.btn:hover,
+select.btn:hover { border-color: var(--accent); }
 button.btn.primary { background: var(--accent); border-color: var(--accent); color: #05121d; font-weight: 600; }
-button.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+button.btn:disabled,
+select.btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .panel {
   background: var(--panel);

@@ -9,6 +9,7 @@ export default function Alerts() {
   const [events, setEvents] = useState([]);
   const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [expanded, setExpanded] = useState(null);
 
   const load = useCallback(async () => {
@@ -18,11 +19,15 @@ export default function Alerts() {
     ]);
     setFlags(f);
     setEvents(e);
+    setError(null);
     setLoading(false);
   }, [statusFilter]);
 
   useEffect(() => {
-    load().catch(() => setLoading(false));
+    load().catch((e) => {
+      setError(e.message);
+      setLoading(false);
+    });
   }, [load]);
 
   async function resolve(id) {
@@ -31,6 +36,7 @@ export default function Alerts() {
   }
 
   if (loading) return <div className="loading">Loading alerts…</div>;
+  if (error) return <div className="loading">Couldn’t load alerts: {error}</div>;
 
   return (
     <>
@@ -123,7 +129,10 @@ export default function Alerts() {
           <tbody>
             {events.map((e) => (
               <tr key={e.id}>
-                <td>{new Date(e.createdAt).toISOString().slice(0, 19).replace('T', ' ')}</td>
+                <td>
+                  {new Date(e.createdAt).toISOString().slice(0, 19).replace('T', ' ')}
+                  {e.direction === 'test' && <span className="pill muted"> TEST</span>}
+                </td>
                 <td className="mono">{e.endpoint}</td>
                 <td>
                   <span className={`pill ${e.ok ? 'ok' : 'bad'}`}>
