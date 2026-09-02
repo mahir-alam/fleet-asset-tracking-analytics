@@ -134,4 +134,7 @@ SELECT
   (SELECT COUNT(*)::int FROM v_maintenance_status WHERE service_overdue)                           AS assets_overdue_service,
   (SELECT COUNT(*)::int FROM "MaintenanceFlag" WHERE "status" = 'OPEN')                            AS open_flags,
   (SELECT COUNT(*)::int FROM "MaintenanceFlag" WHERE "status" = 'TICKETED')                        AS ticketed_flags,
-  (SELECT COUNT(*)::int FROM "IntegrationEvent" WHERE "ok" = true)                                 AS tickets_auto_raised;
+  -- Successful auto-create calls tied to a real flag. Excludes "Send test alert"
+  -- events, which are simulations with no maintenanceFlagId.
+  (SELECT COUNT(*)::int FROM "IntegrationEvent"
+     WHERE "ok" = true AND "maintenanceFlagId" IS NOT NULL)                                        AS tickets_auto_raised;
