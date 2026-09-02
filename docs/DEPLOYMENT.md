@@ -8,15 +8,19 @@ Same pattern as the other portfolio projects: **Vercel** (client) + **Render**
 1. Push this repo to GitHub.
 2. Render ▸ **New ▸ Blueprint** → pick the repo. `render.yaml` provisions
    `fleet-db` (Postgres) and `fleet-api` (web service, `rootDir: server`).
-3. The build runs `prisma migrate deploy` and applies `sql/views.sql`.
+3. The build runs `prisma migrate deploy` and applies `sql/views.sql`. It does
+   **not** seed — every redeploy leaves existing rows (including the
+   append-only `IntegrationEvent` log) untouched.
 4. Set the `sync: false` env vars in the Render dashboard:
    - `CLIENT_ORIGIN`, `DASHBOARD_BASE_URL` → the Vercel URL (from step 2 below)
    - `TICKET_TRACKER_BASE_URL` → the deployed IT ticketing API
    - `INTEGRATION_API_KEY` → **must match** the ticketing system's own `INTEGRATION_API_KEY`
 5. Seed once (Render ▸ Shell, from `server/`):
-   `node prisma/seed.js` — needs `server/prisma/seed-data.json`, so run
-   `python data/generate_sample_data.py` locally first and commit it, or run the
-   generator in the shell.
+   `node prisma/seed.js --force` — the `--force` is required because the script
+   refuses to wipe a non-local database without it. Needs
+   `server/prisma/seed-data.json`, so run `python data/generate_sample_data.py`
+   locally first and commit it, or run the generator in the shell. Run this only
+   on first setup or a deliberate reset — never as part of a deploy.
 6. Health check: `GET https://<fleet-api>.onrender.com/health`.
 
 ## 2. Client — Vercel

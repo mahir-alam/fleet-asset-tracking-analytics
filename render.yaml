@@ -13,6 +13,9 @@ services:
     runtime: node
     plan: free
     rootDir: server
+    # Build applies pending migrations and (re)creates the SQL views only.
+    # It never seeds: table data is inserted once, by hand, from the Render
+    # Shell (`node prisma/seed.js --force`). Redeploys leave data untouched.
     buildCommand: npm install && npx prisma generate && npx prisma migrate deploy && node -e "require('child_process').execSync('npx prisma db execute --file sql/views.sql --schema prisma/schema.prisma',{stdio:'inherit'})"
     startCommand: npm start
     healthCheckPath: /health

@@ -7,6 +7,38 @@ config({ path: new URL('../../.env', import.meta.url) });
 const prisma = new PrismaClient();
 const DATA_PATH = new URL('./seed-data.json', import.meta.url);
 
+const FORCED = process.argv.slice(2).includes('--force') || process.env.SEED_FORCE === '1';
+
+/**
+ * This script deletes every row in the database and re-inserts the sample
+ * dataset. It must never run automatically (build step, redeploy, migration
+ * hook) — it is a one-time manual step for a fresh local or demo database.
+ *
+ * It refuses to run against a database that looks non-local unless invoked
+ * explicitly with `--force` (or SEED_FORCE=1).
+ */
+function assertSafeTarget() {
+  const url = process.env.DATABASE_URL ?? '';
+  let host = '';
+  try {
+    host = new URL(url).hostname;
+  } catch {
+    host = '';
+  }
+  const localHosts = ['localhost', '127.0.0.1', '::1', 'db'];
+  const looksLocal = localHosts.includes(host);
+  const isProd = process.env.NODE_ENV === 'production';
+
+  if ((isProd || !looksLocal) && !FORCED) {
+    console.error(
+      '\nRefusing to seed: this wipes all data and the target is not a local\n' +
+        `database (NODE_ENV=${process.env.NODE_ENV ?? 'unset'}, host=${host || 'unknown'}).\n` +
+        'Re-run with --force if you are certain you want to reset this database.\n',
+    );
+    process.exit(1);
+  }
+}
+
 function loadSeed() {
   if (!existsSync(DATA_PATH)) {
     console.error(
@@ -19,6 +51,7 @@ function loadSeed() {
 }
 
 async function main() {
+  assertSafeTarget();
   const seed = loadSeed();
 
   console.log('Clearing existing data…');
