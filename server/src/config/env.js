@@ -18,7 +18,9 @@ const {
   TICKET_TRACKER_BASE_URL = '',
   INTEGRATION_API_KEY = '',
   INTEGRATION_EXTERNAL_SOURCE = 'fleet-asset-tracker',
-  INTEGRATION_TIMEOUT_MS = '5000',
+  INTEGRATION_TIMEOUT_MS = '15000',
+  INTEGRATION_ATTEMPTS = '3',
+  INTEGRATION_RETRY_DELAY_MS = '1500',
 } = process.env;
 
 const baseUrl = TICKET_TRACKER_BASE_URL.replace(/\/+$/, '');
@@ -39,6 +41,8 @@ export const env = {
     apiKey: INTEGRATION_API_KEY,
     externalSource: INTEGRATION_EXTERNAL_SOURCE,
     timeoutMs: Number(INTEGRATION_TIMEOUT_MS),
+    attempts: Number(INTEGRATION_ATTEMPTS),
+    retryDelayMs: Number(INTEGRATION_RETRY_DELAY_MS),
     endpointPath: '/api/tickets/auto-create',
   },
 };

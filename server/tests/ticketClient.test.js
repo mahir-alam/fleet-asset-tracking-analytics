@@ -100,7 +100,7 @@ test('live mode sends X-Api-Key and parses the ticket number from a 201', async 
   assert.doesNotThrow(() => autoCreateTicketSchema.parse(sent));
 });
 
-test('live mode retries once on a 5xx then surfaces the failure', async () => {
+test('live mode retries on a 5xx then surfaces the failure', async () => {
   let n = 0;
   const fetchImpl = async () => {
     n += 1;
@@ -112,8 +112,35 @@ test('live mode retries once on a 5xx then surfaces the failure', async () => {
     mode: 'live',
     baseUrl: 'https://tracker.example.com',
     fetchImpl,
+    attempts: 3,
+    retryDelayMs: 0,
   });
-  assert.equal(n, 2, 'should attempt twice');
+  assert.equal(n, 3, 'should exhaust all attempts');
   assert.equal(res.ok, false);
   assert.equal(res.status, 503);
+});
+
+test('live mode retries a network error and succeeds on a later attempt', async () => {
+  let n = 0;
+  const fetchImpl = async () => {
+    n += 1;
+    if (n < 3) throw new Error('ECONNREFUSED');
+    return {
+      ok: true,
+      status: 201,
+      json: async () => ({ id: 'tkt_9', number: 'INC-000901', source: 'SYSTEM_GENERATED' }),
+    };
+  };
+  const res = await createTicketFromFlag({
+    flag,
+    asset,
+    mode: 'live',
+    baseUrl: 'https://tracker.example.com',
+    fetchImpl,
+    attempts: 3,
+    retryDelayMs: 0,
+  });
+  assert.equal(n, 3);
+  assert.equal(res.ok, true);
+  assert.equal(res.ticketNumber, 'INC-000901');
 });

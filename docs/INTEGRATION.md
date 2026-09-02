@@ -27,7 +27,7 @@ is **no `priority` field** (the tracker derives priority from impact × urgency)
 | `impact`         | `SINGLE_USER \| DEPARTMENT \| ENTIRE_COMPANY`, optional (default `DEPARTMENT`) | mapped from flag kind |
 | `urgency`        | `WORKAROUND_AVAILABLE \| WORK_DEGRADED \| SYSTEM_DOWN`, optional (default `WORK_DEGRADED`) | mapped from flag kind |
 | `externalSource` | string, 1–120, **required**                                                | `"fleet-asset-tracker"` (`INTEGRATION_EXTERNAL_SOURCE`) |
-| `externalRef`    | string, ≤200, optional                                                     | `"flag:<id>"`, or `"demo-<timestamp>"` from the test button |
+| `externalRef`    | string, ≤200, optional                                                     | `"flag:<id>"` (real evaluation), or `"test-alert:<tag>:<ts>"` from the simulated test button |
 | `assetTag`       | string, ≤120, optional (tracker links it to its own Asset if the tag exists) | the fleet asset tag |
 
 Response: **201** with the full ticket JSON — includes `number` (e.g.
@@ -49,7 +49,7 @@ Kind → impact / urgency mapping (`server/src/modules/integration/ticketClient.
 | mode       | behaviour                                                                  |
 | ---------- | ------------------------------------------------------------------------- |
 | `mock`     | no network; returns a synthetic `INC-` number. Still writes an `IntegrationEvent`. Default when `TICKET_TRACKER_BASE_URL` is unset. |
-| `live`     | real `POST` to the tracker with `X-Api-Key`. 5 s timeout, one retry on network error / 5xx. |
+| `live`     | real `POST` to the tracker with `X-Api-Key`. Per-attempt timeout `INTEGRATION_TIMEOUT_MS` (default 15 s), up to `INTEGRATION_ATTEMPTS` tries (default 3) with `INTEGRATION_RETRY_DELAY_MS` between them, retrying on network error / timeout / 5xx. |
 | `disabled` | flags are still raised; no ticket call is attempted.                       |
 
 ## Point it at a real tracker
@@ -62,8 +62,9 @@ INTEGRATION_API_KEY=<same value as the tracker's INTEGRATION_API_KEY>
 
 ## Verify in both systems
 
-1. In FleetView, click **Send test alert** (or run an evaluation that raises a
-   ticketable flag).
+1. In FleetView, click **Refresh evaluation** so a ticketable flag is raised and
+   escalated. (**Send test alert** is a local simulation — it always runs in mock
+   mode and never posts to the real tracker.)
 2. FleetView **Alerts & Tickets** page → *Integration event log*: the row shows
    the request payload, `201`, and the returned ticket number.
 3. In the IT ticketing system, open that ticket number. Confirm:

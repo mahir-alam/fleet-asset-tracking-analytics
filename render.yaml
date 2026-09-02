@@ -38,5 +38,13 @@ services:
         sync: false
       - key: INTEGRATION_EXTERNAL_SOURCE
         value: fleet-asset-tracker
+      # The ticketing system is on a free tier that cold-starts; give an
+      # auto-create call enough time and retries to survive that wake-up.
+      - key: INTEGRATION_TIMEOUT_MS
+        value: "30000"
+      - key: INTEGRATION_ATTEMPTS
+        value: "4"
+      - key: INTEGRATION_RETRY_DELAY_MS
+        value: "2000"
       - key: EVALUATION_CRON
         value: "*/30 * * * *"

@@ -1,6 +1,8 @@
 import { env, integrationEndpoint } from '../../config/env.js';
 import { logger } from '../../lib/logger.js';
 
+const sleep = (ms) => (ms > 0 ? new Promise((r) => setTimeout(r, ms)) : Promise.resolve());
+
 /**
  * Client for the IT Help Desk Ticketing system's external integration endpoint.
  *
@@ -92,6 +94,9 @@ export async function createTicketFromFlag({
   mode = env.integration.mode,
   baseUrl = env.integration.baseUrl,
   apiKey = env.integration.apiKey,
+  timeoutMs = env.integration.timeoutMs,
+  attempts = env.integration.attempts,
+  retryDelayMs = env.integration.retryDelayMs,
 }) {
   const endpoint = baseUrl ? `${baseUrl.replace(/\/+$/, '')}${env.integration.endpointPath}` : integrationEndpoint();
   const requestPayload = buildAutoCreatePayload({ flag, asset, externalRef });
@@ -115,8 +120,13 @@ export async function createTicketFromFlag({
     };
   }
 
+  // The tracker is often on a platform that cold-starts (Render free tier), so
+  // the first request after an idle period can take tens of seconds or time out.
+  // Retry a few times with a short backoff before giving up on a ticket.
+  const total = Math.max(1, attempts);
   let lastError;
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
+  for (let attempt = 1; attempt <= total; attempt += 1) {
+    const isLast = attempt === total;
     try {
       const res = await fetchImpl(endpoint, {
         method: 'POST',
@@ -125,13 +135,14 @@ export async function createTicketFromFlag({
           'x-api-key': apiKey,
         },
         body: JSON.stringify(requestPayload),
-        signal: AbortSignal.timeout(env.integration.timeoutMs),
+        signal: AbortSignal.timeout(timeoutMs),
       });
       const raw = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        if (res.status >= 500 && attempt === 1) {
+        if (res.status >= 500 && !isLast) {
           lastError = new Error(`tracker responded ${res.status}`);
+          await sleep(retryDelayMs);
           continue;
         }
         return {
@@ -153,10 +164,13 @@ export async function createTicketFromFlag({
       };
     } catch (err) {
       lastError = err;
-      if (attempt === 1) continue;
+      if (!isLast) {
+        await sleep(retryDelayMs);
+        continue;
+      }
     }
   }
 
-  logger.error(`auto-create call failed: ${lastError?.message}`);
+  logger.error(`auto-create call failed after ${total} attempt(s): ${lastError?.message}`);
   return { ...base, ok: false, error: lastError?.message || 'request failed' };
 }
