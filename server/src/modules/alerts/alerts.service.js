@@ -5,11 +5,12 @@ import { evaluateAsset, TICKETABLE_KINDS } from './rules.js';
 import { createTicketFromFlag } from '../integration/ticketClient.js';
 
 /**
- * Walk every non-retired asset, raise MaintenanceFlags for newly breached
- * thresholds (deduped: one non-RESOLVED flag per asset+kind), and escalate
- * ticketable kinds to the IT ticketing system.
+ * For every non-retired asset: raise a MaintenanceFlag for each newly breached
+ * threshold (one non-RESOLVED flag per asset + kind), and for ticketable kinds
+ * create a ticket in the IT ticketing system.
  *
- * Deps are injectable so this is testable without a database or network.
+ * The database and ticket-client calls are passed in via `deps` so the function
+ * can be tested without a database or network.
  */
 export async function runFleetEvaluation({
   createTickets = true,
@@ -51,7 +52,7 @@ export async function runFleetEvaluation({
           observedValue: finding.observedValue,
         });
       } catch (err) {
-        // Lost a race against the partial unique index — treat as already-flagged.
+        // Concurrent evaluation already inserted this flag (partial unique index).
         if (err?.code === 'P2002') {
           const raced = await findActiveFlag(asset.id, finding.kind);
           if (raced) summary.flags.push(raced);

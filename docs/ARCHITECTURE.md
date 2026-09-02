@@ -38,10 +38,10 @@ disagree on a number. Python is the data-analysis and pipeline engine.
 
 ## Alert engine
 
-`server/src/modules/alerts/rules.js` is the **single source of truth** for what
-counts as a maintenance condition. It is pure and synchronous.
-`thresholds.json` holds the numbers (env-overridable). Python only *reports*
-metrics — it never re-evaluates alert rules, so there is no logic to drift.
+`server/src/modules/alerts/rules.js` is the only place that decides what counts
+as a maintenance condition. It is pure and synchronous. `thresholds.json` holds
+the numbers (env-overridable). Python only reports metrics; it never re-evaluates
+alert rules, so the two can't drift.
 
 `alerts.service.js#runFleetEvaluation()`:
 

@@ -6,8 +6,8 @@ Outputs (run from the repo root):
   data/raw/fleet_raw_sample.xlsx     multi-sheet raw dataset -> Python/Excel ingest demo
   server/prisma/seed-data.json       normalized seed for `prisma db seed`
 
-A handful of assets are deliberately built to breach alert thresholds so the
-demo produces MaintenanceFlags and auto-creates IT tickets:
+Five assets are configured to breach alert thresholds so the demo produces
+MaintenanceFlags and auto-creates IT tickets:
 
   HT-13  SERVICE_OVERDUE     (ticketed)
   EX-03  EXCESSIVE_DOWNTIME  (ticketed)

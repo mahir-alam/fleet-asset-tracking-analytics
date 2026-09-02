@@ -1,9 +1,9 @@
 import { config } from 'dotenv';
 
 /**
- * Centralised, validated environment access. Loads the repo-root .env
- * regardless of the process CWD (npm workspace scripts run from server/),
- * then falls back to sane local-dev defaults.
+ * Central environment access. Loads the repo-root .env regardless of the
+ * process working directory (npm workspace scripts run from server/), then
+ * falls back to local development defaults.
  */
 config({ path: new URL('../../../.env', import.meta.url) });
 

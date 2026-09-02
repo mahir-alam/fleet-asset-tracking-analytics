@@ -1,8 +1,9 @@
 import { prisma } from '../../lib/prisma.js';
 
 /**
- * Read model for the analytics layer. Everything here is backed by the SQL
- * views in server/sql/views.sql so the API and Power BI agree by construction.
+ * Read model for the analytics layer. Every query here reads the SQL views in
+ * server/sql/views.sql, which are also the source for the Power BI model, so the
+ * two report the same numbers.
  */
 
 const ASSET_METRICS_SQL = `

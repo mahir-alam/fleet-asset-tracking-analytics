@@ -1,18 +1,18 @@
 import { readFileSync } from 'node:fs';
 
 /**
- * Threshold rule engine — the single source of truth for what counts as a
- * maintenance condition. Pure and synchronous so it is trivially unit-tested.
+ * Threshold rules: given an asset and its 30-day metrics, return the list of
+ * maintenance conditions it currently breaches. No I/O, so it unit-tests directly.
  *
  * `metrics` is a row from analytics.service.assetMetrics() (snake_case fields
- * straight off the SQL views). `asset` is a Prisma Asset record.
+ * from the SQL views). `asset` is a Prisma Asset record.
  */
 
 export const DEFAULT_THRESHOLDS = JSON.parse(
   readFileSync(new URL('./thresholds.json', import.meta.url), 'utf8'),
 );
 
-// Env overrides for the numeric knobs (handy for demos / deployment tuning).
+// Optional env overrides for the numeric thresholds (demo and deployment tuning).
 function withEnvOverrides(t) {
   const n = (v, d) => (v === undefined || v === '' ? d : Number(v));
   return {
@@ -40,7 +40,7 @@ export function evaluateAsset(asset, metrics = {}, thresholds = DEFAULT_THRESHOL
   const t = withEnvOverrides(thresholds);
   const findings = [];
 
-  // ── Service interval ────────────────────────────────────────────────────
+  // Service interval
   const hoursSince = num(metrics.hours_since_service);
   const hoursToNext = num(metrics.hours_to_next_service);
   if (hoursSince != null && hoursSince > asset.serviceIntervalHours) {
@@ -63,7 +63,7 @@ export function evaluateAsset(asset, metrics = {}, thresholds = DEFAULT_THRESHOL
     });
   }
 
-  // ── Utilization ────────────────────────────────────────────────────────
+  // Utilization
   const util = num(metrics.avg_utilization_pct_30d);
   const daysLogged = num(metrics.days_logged) ?? 0;
   if (
@@ -79,7 +79,7 @@ export function evaluateAsset(asset, metrics = {}, thresholds = DEFAULT_THRESHOL
     });
   }
 
-  // ── Downtime / availability ───────────────────────────────────────────
+  // Downtime / availability
   const downHours = num(metrics.unplanned_downtime_hours_30d) ?? 0;
   const availability = num(metrics.availability_pct_30d);
   const downtimeBreached = downHours > t.excessiveUnplannedDowntimeHours;
@@ -96,7 +96,7 @@ export function evaluateAsset(asset, metrics = {}, thresholds = DEFAULT_THRESHOL
     });
   }
 
-  // ── Fuel burn ─────────────────────────────────────────────────────────
+  // Fuel burn
   const burn = num(metrics.litres_per_engine_hour);
   const baseline = thresholds.fuelBurnBaselineLitresPerHour?.[asset.type];
   if (burn != null && baseline) {

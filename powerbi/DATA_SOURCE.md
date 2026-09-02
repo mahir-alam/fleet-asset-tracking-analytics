@@ -1,8 +1,8 @@
 # Power BI data source
 
-The report is an **analytical / BI layer** that is deliberately separate from the
-operational React dashboard. Both read the **same SQL views** (`server/sql/views.sql`),
-so the two layers agree by construction.
+The report is an analytical / BI layer, separate from the operational React
+dashboard. Both read the same SQL views (`server/sql/views.sql`), so they report
+the same numbers.
 
 ## Option A — direct PostgreSQL connection (recommended)
 
