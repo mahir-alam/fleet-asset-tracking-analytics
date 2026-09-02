@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../../lib/prisma.js';
-import { asyncHandler, badRequest, notFound } from '../../lib/errors.js';
+import { asyncHandler, notFound } from '../../lib/errors.js';
 import { validate } from '../../middleware/validate.js';
 import { env } from '../../config/env.js';
 import { createTicketFromFlag } from './ticketClient.js';
@@ -36,9 +36,14 @@ router.get(
 );
 
 /**
- * "Send test alert" button. Builds a synthetic flag for a real asset and fires
- * the same integration path used by the pipeline. The flag is NOT persisted;
- * the IntegrationEvent IS, so it shows up in the Alerts page audit log.
+ * "Send test alert" control on the dashboard. Builds a throwaway flag for a
+ * chosen asset and runs it through the payload builder so you can see the shape
+ * of an auto-create call and confirm the audit trail works.
+ *
+ * This is always a simulation: it forces mock mode, so it never posts to a real
+ * ticketing system regardless of INTEGRATION_MODE. The flag is not persisted;
+ * the IntegrationEvent is, marked with direction "test" so it is
+ * distinguishable from real evaluation traffic in the log.
  */
 router.post(
   '/test-alert',
@@ -58,15 +63,11 @@ router.post(
       : await prisma.asset.findFirst({ orderBy: { assetTag: 'asc' } });
     if (!asset) throw notFound(req.body.assetId ? 'Asset not found' : 'No assets exist — seed the database first');
 
-    if (env.integration.mode === 'disabled') {
-      throw badRequest('Integration is disabled (INTEGRATION_MODE=disabled)');
-    }
-
     const kind = req.body.kind ?? 'EXCESSIVE_DOWNTIME';
     const syntheticFlag = {
-      id: `demo-${Date.now()}`,
+      id: `test-alert-${Date.now()}`,
       kind,
-      detail: 'Synthetic alert generated from the dashboard "Send test alert" control.',
+      detail: 'Simulated alert from the dashboard "Send test alert" control — not a real maintenance finding.',
       thresholdValue: 0,
       observedValue: 0,
     };
@@ -74,12 +75,14 @@ router.post(
     const outcome = await createTicketFromFlag({
       flag: syntheticFlag,
       asset,
-      externalRef: syntheticFlag.id,
+      externalRef: `test-alert:${asset.assetTag}:${Date.now()}`,
+      mode: 'mock',
     });
 
     await prisma.integrationEvent.create({
       data: {
         maintenanceFlagId: null,
+        direction: 'test',
         endpoint: outcome.endpoint,
         requestPayload: outcome.requestPayload,
         responseStatus: outcome.status ?? null,
@@ -92,6 +95,7 @@ router.post(
 
     res.status(outcome.ok ? 201 : 502).json({
       ok: outcome.ok,
+      simulated: true,
       asset: { id: asset.id, assetTag: asset.assetTag },
       kind,
       ticketNumber: outcome.ticketNumber ?? null,
