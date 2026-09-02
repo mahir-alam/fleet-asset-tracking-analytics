@@ -7,7 +7,10 @@ import { createTicketFromFlag } from '../integration/ticketClient.js';
 /**
  * For every non-retired asset: raise a MaintenanceFlag for each newly breached
  * threshold (one non-RESOLVED flag per asset + kind), and for ticketable kinds
- * create a ticket in the IT ticketing system.
+ * create a ticket in the IT ticketing system. A ticketable flag that is still
+ * OPEN from an earlier run (its ticket call failed then) is retried on the next
+ * evaluation, so a ticketing-system outage doesn't leave it permanently
+ * un-ticketed.
  *
  * The database and ticket-client calls are passed in via `deps` so the function
  * can be tested without a database or network.
@@ -32,13 +35,46 @@ export async function runFleetEvaluation({
 
   const summary = { evaluated: assets.length, newFlags: 0, ticketsCreated: 0, ticketFailures: 0, flags: [] };
 
+  // Call the ticketing system for one flag and record the attempt. Used both
+  // for a freshly raised flag and to retry a flag that was raised earlier but
+  // never ticketed (the ticketing system was down at the time).
+  async function attemptTicket(flag, asset) {
+    const outcome = await ticketClient({ flag, asset });
+    await recordIntegrationEvent({
+      maintenanceFlagId: flag.id,
+      endpoint: outcome.endpoint,
+      requestPayload: outcome.requestPayload,
+      responseStatus: outcome.status ?? null,
+      responseBody: outcome.raw ?? null,
+      ticketNumber: outcome.ticketNumber ?? null,
+      ok: outcome.ok,
+      errorMessage: outcome.error ?? null,
+    });
+
+    if (outcome.ok) {
+      summary.ticketsCreated += 1;
+      return markTicketed(flag.id, {
+        status: 'TICKETED',
+        externalTicketNumber: outcome.ticketNumber ?? null,
+        externalTicketId: outcome.ticketId ?? null,
+      });
+    }
+    summary.ticketFailures += 1;
+    logger.warn(`flag ${flag.id} (${flag.kind}) not ticketed: ${outcome.error}`);
+    return flag;
+  }
+
   for (const asset of assets) {
     const findings = evaluateAsset(asset, metricsById.get(asset.id) ?? {});
 
     for (const finding of findings) {
+      const ticketable = createTickets && TICKETABLE_KINDS.includes(finding.kind);
+
       const existing = await findActiveFlag(asset.id, finding.kind);
       if (existing) {
-        summary.flags.push(existing);
+        summary.flags.push(
+          ticketable && existing.status === 'OPEN' ? await attemptTicket(existing, asset) : existing,
+        );
         continue;
       }
 
@@ -62,33 +98,7 @@ export async function runFleetEvaluation({
       }
       summary.newFlags += 1;
 
-      if (createTickets && TICKETABLE_KINDS.includes(finding.kind)) {
-        const outcome = await ticketClient({ flag, asset });
-        await recordIntegrationEvent({
-          maintenanceFlagId: flag.id,
-          endpoint: outcome.endpoint,
-          requestPayload: outcome.requestPayload,
-          responseStatus: outcome.status ?? null,
-          responseBody: outcome.raw ?? null,
-          ticketNumber: outcome.ticketNumber ?? null,
-          ok: outcome.ok,
-          errorMessage: outcome.error ?? null,
-        });
-
-        if (outcome.ok) {
-          flag = await markTicketed(flag.id, {
-            status: 'TICKETED',
-            externalTicketNumber: outcome.ticketNumber ?? null,
-            externalTicketId: outcome.ticketId ?? null,
-          });
-          summary.ticketsCreated += 1;
-        } else {
-          summary.ticketFailures += 1;
-          logger.warn(`flag ${flag.id} (${finding.kind}) not ticketed: ${outcome.error}`);
-        }
-      }
-
-      summary.flags.push(flag);
+      summary.flags.push(ticketable ? await attemptTicket(flag, asset) : flag);
     }
   }
 

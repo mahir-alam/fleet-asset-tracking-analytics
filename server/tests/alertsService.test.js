@@ -94,3 +94,50 @@ test('createTickets:false raises flags but makes no calls', async () => {
   assert.equal(summary.ticketsCreated, 0);
   assert.equal(store.integrationEvents.length, 0);
 });
+
+test('a flag left OPEN by a failed ticket call is retried on the next run', async () => {
+  const { store, deps } = fakeDeps({ assets: ASSETS, metrics: METRICS });
+
+  // First run: the ticketing system is down.
+  let ticketingUp = false;
+  deps.ticketClient = async ({ flag }) =>
+    ticketingUp
+      ? {
+          ok: true,
+          endpoint: 'http://tracker/api/tickets/auto-create',
+          requestPayload: { title: flag.kind },
+          status: 201,
+          ticketNumber: `INC-00${flag.id}`,
+          ticketId: `t_${flag.id}`,
+          raw: { source: 'SYSTEM_GENERATED' },
+        }
+      : {
+          ok: false,
+          endpoint: 'http://tracker/api/tickets/auto-create',
+          requestPayload: { title: flag.kind },
+          error: 'tracker unreachable',
+        };
+
+  const first = await runFleetEvaluation({ deps });
+  assert.equal(first.newFlags, 2);
+  assert.equal(first.ticketsCreated, 0);
+  assert.equal(first.ticketFailures, 1);
+  assert.equal(store.flags.find((f) => f.kind === 'SERVICE_OVERDUE').status, 'OPEN');
+
+  // Second run: tracker is back. No new flags, but the OPEN ticketable flag is retried.
+  ticketingUp = true;
+  const second = await runFleetEvaluation({ deps });
+  assert.equal(second.newFlags, 0);
+  assert.equal(second.ticketsCreated, 1);
+  assert.equal(second.ticketFailures, 0);
+
+  const overdue = store.flags.find((f) => f.kind === 'SERVICE_OVERDUE');
+  assert.equal(overdue.status, 'TICKETED');
+  assert.match(overdue.externalTicketNumber, /^INC-/);
+  assert.equal(store.integrationEvents.length, 2); // one failed, one success
+
+  // Third run: now TICKETED, so it is not retried again.
+  const third = await runFleetEvaluation({ deps });
+  assert.equal(third.ticketsCreated, 0);
+  assert.equal(store.integrationEvents.length, 2);
+});
