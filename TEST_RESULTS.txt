@@ -1,8 +1,8 @@
 ================================================================================
 Fleet Asset Tracking & Analytics - Full Test Suite
-Generated: 2026-09-02T01:33:49Z
+Generated: 2026-09-02T01:54:16Z
 Host: MINGW64_NT-10.0-26200 / node v24.13.0 / Python 3.14.2
-Total: 31 tests  (20 server node:test + 11 analytics pytest)
+Total: 33 tests  (22 server node:test + 11 analytics pytest)
 ================================================================================
 
 ########## 1/2  server  ->  npm --workspace server test  ##########
@@ -11,42 +11,48 @@ Total: 31 tests  (20 server node:test + 11 analytics pytest)
 > @fleet/server@1.0.0 test
 > node --test --test-reporter spec "tests/**/*.test.js"
 
-2026-09-02T01:33:51.128Z INFO  Fleet evaluation: 3 assets, 2 new flags, 1 tickets (0 failed)
-2026-09-02T01:33:51.130Z INFO  Fleet evaluation: 3 assets, 2 new flags, 1 tickets (0 failed)
-2026-09-02T01:33:51.130Z INFO  Fleet evaluation: 3 assets, 0 new flags, 0 tickets (0 failed)
-2026-09-02T01:33:51.132Z INFO  Fleet evaluation: 3 assets, 2 new flags, 0 tickets (0 failed)
-✔ raises flags, tickets only the ticketable kinds, records an event per call (12.2852ms)
-✔ is idempotent — a second run creates nothing new (dedupe) (0.415ms)
-✔ createTickets:false raises flags but makes no calls (0.3026ms)
-[0mGET /health [32m200[0m 1.236 ms - 47[0m
-✔ GET /health reports the service and integration mode (30.115ms)
-[0mGET /api/nope [33m404[0m 0.253 ms - 27[0m
-✔ unknown routes return a JSON 404 (12.9889ms)
-[0mGET /api/integration/config [32m200[0m 0.315 ms - 89[0m
-✔ GET /api/integration/config exposes the integration wiring (11.0633ms)
-[0mGET /api/alerts/flags?status=BOGUS [33m400[0m 0.917 ms - 151[0m
-✔ validation rejects a bad query param with 400 + details (5.3897ms)
-✔ healthy asset raises no findings (1.9091ms)
-✔ SERVICE_OVERDUE when hours since service exceeds the interval (0.1822ms)
-✔ SERVICE_DUE inside the warning window, but not when also overdue (0.1497ms)
-✔ LOW_UTILIZATION only with enough logged days (0.1202ms)
-✔ EXCESSIVE_DOWNTIME on hours OR on availability (0.1174ms)
-✔ HIGH_FUEL_BURN compares against the per-type baseline (0.1524ms)
-✔ string-typed metric values (from raw SQL) are coerced (0.1088ms)
-✔ ticketable kinds are the escalating ones (0.1677ms)
-✔ payload satisfies the tracker contract and carries no extra keys (1.464ms)
-✔ impact/urgency vary by flag kind but stay in-enum (0.4894ms)
-✔ mock mode returns a synthetic INC- number without touching the network (0.3763ms)
-✔ live mode sends X-Api-Key and parses the ticket number from a 201 (0.4606ms)
-✔ live mode retries once on a 5xx then surfaces the failure (0.265ms)
-ℹ tests 20
+2026-09-02T01:54:17.096Z INFO  Fleet evaluation: 3 assets, 2 new flags, 1 tickets (0 failed)
+2026-09-02T01:54:17.098Z INFO  Fleet evaluation: 3 assets, 2 new flags, 1 tickets (0 failed)
+2026-09-02T01:54:17.098Z INFO  Fleet evaluation: 3 assets, 0 new flags, 0 tickets (0 failed)
+2026-09-02T01:54:17.099Z INFO  Fleet evaluation: 3 assets, 2 new flags, 0 tickets (0 failed)
+2026-09-02T01:54:17.099Z WARN  flag flag_1 (SERVICE_OVERDUE) not ticketed: tracker unreachable
+2026-09-02T01:54:17.099Z INFO  Fleet evaluation: 3 assets, 2 new flags, 0 tickets (1 failed)
+2026-09-02T01:54:17.099Z INFO  Fleet evaluation: 3 assets, 0 new flags, 1 tickets (0 failed)
+2026-09-02T01:54:17.099Z INFO  Fleet evaluation: 3 assets, 0 new flags, 0 tickets (0 failed)
+✔ raises flags, tickets only the ticketable kinds, records an event per call (9.1185ms)
+✔ is idempotent — a second run creates nothing new (dedupe) (0.7955ms)
+✔ createTickets:false raises flags but makes no calls (0.2361ms)
+✔ a flag left OPEN by a failed ticket call is retried on the next run (0.4359ms)
+[0mGET /health [32m200[0m 1.021 ms - 47[0m
+✔ GET /health reports the service and integration mode (25.2694ms)
+[0mGET /api/nope [33m404[0m 0.217 ms - 27[0m
+✔ unknown routes return a JSON 404 (10.7914ms)
+[0mGET /api/integration/config [32m200[0m 0.284 ms - 89[0m
+✔ GET /api/integration/config exposes the integration wiring (9.3553ms)
+[0mGET /api/alerts/flags?status=BOGUS [33m400[0m 0.864 ms - 151[0m
+✔ validation rejects a bad query param with 400 + details (4.7138ms)
+✔ healthy asset raises no findings (1.3254ms)
+✔ SERVICE_OVERDUE when hours since service exceeds the interval (0.1221ms)
+✔ SERVICE_DUE inside the warning window, but not when also overdue (0.1067ms)
+✔ LOW_UTILIZATION only with enough logged days (0.0895ms)
+✔ EXCESSIVE_DOWNTIME on hours OR on availability (0.092ms)
+✔ HIGH_FUEL_BURN compares against the per-type baseline (0.0923ms)
+✔ string-typed metric values (from raw SQL) are coerced (0.0796ms)
+✔ ticketable kinds are the escalating ones (0.1246ms)
+✔ payload satisfies the tracker contract and carries no extra keys (1.3434ms)
+✔ impact/urgency vary by flag kind but stay in-enum (0.4882ms)
+✔ mock mode returns a synthetic INC- number without touching the network (0.3335ms)
+✔ live mode sends X-Api-Key and parses the ticket number from a 201 (0.3524ms)
+✔ live mode retries on a 5xx then surfaces the failure (0.2257ms)
+✔ live mode retries a network error and succeeds on a later attempt (0.2551ms)
+ℹ tests 22
 ℹ suites 0
-ℹ pass 20
+ℹ pass 22
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 479.4704
+ℹ duration_ms 405.2084
 [server exit: 0]
 
 ########## 2/2  analytics  ->  python -m pytest  ##########
@@ -71,9 +77,9 @@ tests/test_metrics.py::test_downtime_mtbf_mttr_and_availability PASSED   [ 81%]
 tests/test_metrics.py::test_maintenance_overdue_flag PASSED              [ 90%]
 tests/test_metrics.py::test_compute_all_shape_and_kpis PASSED            [100%]
 
-============================= 11 passed in 0.43s ==============================
+============================= 11 passed in 0.34s ==============================
 [pytest exit: 0]
 
 ================================================================================
-SUMMARY: 20 + 11 = 31 passed, 0 failed
+SUMMARY: 22 + 11 = 33 passed, 0 failed
 ================================================================================
